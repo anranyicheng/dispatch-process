@@ -1,0 +1,77 @@
+;; pages dispatch
+(defparameter *instruction-list* ())
+(defparameter *temp* ())
+(let ((cout 0))
+  (loop for i from 0 upto 319
+     do(progn
+	 (push i *temp*)
+	 (incf cout)
+	 (when (= ( mod cout  10) 0)
+	   (setf *temp* (reverse *temp*))
+	   (push *temp* *instruction-list*)
+	   (setf *temp* ()))))
+  	   (setf *instruction-list* (reverse *instruction-list*)))
+(defparameter *process-list* ())
+(defun get-num (x y)
+	   (let ((num 0 ))
+	     (setf num (random y))
+	     (if (< num x)
+		 (get-num x y)
+		 num)))
+(defun construct-process-list()
+  (loop for i from 0 upto 79
+     do(progn
+	 (push i *process-list*)
+	  (push (+ i (random 10)) *process-list*)
+	 (push (get-num 0 160) *process-list*)
+	 (push (get-num 160 320) *process-list*))
+  (setf *process-list* (reverse *process-list*))))
+(defparameter *own-memory* (make-array 4 :initial-element nil))
+(defun get-instruction-posistion (instru-num) ;寻找指令所在的页面数
+  (let ((flag 0))
+  (dotimes (i  (length *instruction-list*))
+    (dolist (lst1 (nth i *instruction-list*))
+      (when (= instru-num lst1)
+	(setf flag 1)
+	(return )))
+    (when (= flag 1)
+      (return i)))))
+(defun judge-posistion(run-num)        ;判断该执行的指令是否在内存中
+  (let ((flag 0))
+    (dotimes (i (length *own-memory*))
+      (dolist (lst (aref *own-memory* i)) 
+	(when (= run-num lst)
+	  (setf flag 1)
+	  (return)))
+      (if (= flag 1)
+	  (return t)))))
+(defun fifo()
+  (construct-process-list)
+  (let ((tag 0)
+	(count 0))
+    (dotimes ( i 320)
+      (if ( < i 4)	
+	(if (judge-posistion (nth i *process-list*))
+	    nil
+	    (progn
+	      (setf (aref *own-memory* tag) (nth (get-instruction-posistion (nth i *process-list*)) *instruction-list*))
+	      (incf tag)
+	      (format t "~a ~%~%" *own-memory*)
+	      (incf count)))
+	(if (judge-posistion (nth i *process-list*))
+	    nil
+	    (progn
+	      (if ( = tag 4)
+		  (progn
+		    (setf (aref *own-memory* 0) (nth (get-instruction-posistion (nth i *process-list*)) *instruction-list*))
+		    (format t "~a ~%~%" *own-memory*)
+		    (incf count)
+		    (setf tag 1))
+		  (progn
+		    (setf (aref *own-memory*  tag) (nth (get-instruction-posistion (nth i *process-list*)) *instruction-list*))
+		    (incf count)
+		    (format t "~a ~%~%" *own-memory*)
+		    (incf tag)))))))
+    (print count)
+    (print (/ count 320))))
+	
